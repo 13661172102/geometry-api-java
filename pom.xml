@@ -84,18 +84,18 @@
 		</profile>
 	</profiles>
 
-	<distributionManagement>
+<!--	<distributionManagement>
 		<snapshotRepository>
 			<id>ossrh</id>
 			<url>https://oss.sonatype.org/content/repositories/snapshots</url>
 		</snapshotRepository>
-	</distributionManagement>
+	</distributionManagement>-->
 
 	<properties>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 
-		<java.source.version>1.7</java.source.version>
-		<java.target.version>1.7</java.target.version>
+		<java.source.version>1.8</java.source.version>
+		<java.target.version>1.8</java.target.version>
 
 		<!-- dependency versions -->
 		<jackson.version>2.9.6</jackson.version>
@@ -237,7 +237,7 @@
 					</execution>
 				</executions>
 			</plugin>
-			<plugin>
+<!--			<plugin>
 				<groupId>org.sonatype.plugins</groupId>
 				<artifactId>nexus-staging-maven-plugin</artifactId>
 				<version>1.6.8</version>
@@ -247,7 +247,14 @@
 					<nexusUrl>https://oss.sonatype.org/</nexusUrl>
 					<autoReleaseAfterClose>true</autoReleaseAfterClose>
 				</configuration>
-			</plugin>
+			</plugin>-->
 		</plugins>
 	</build>
+
+	<distributionManagement>
+		<repository>
+			<id>piesatRepo</id>
+			<url>http://10.1.102.47:9081/repository/maven-releases/</url>
+		</repository>
+	</distributionManagement>
 </project>
