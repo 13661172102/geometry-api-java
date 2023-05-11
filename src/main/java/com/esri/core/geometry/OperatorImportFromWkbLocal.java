@@ -119,6 +119,7 @@ class OperatorImportFromWkbLocal extends OperatorImportFromWkb {
 				Geometry geometry;
 
 				int wkbType = wkbHelper.getInt(1);
+				wkbType =  (wkbType & 0xffff)%1000;
 				int ogcType;
 
 				// strip away attributes from type identifier
@@ -169,7 +170,13 @@ class OperatorImportFromWkbLocal extends OperatorImportFromWkb {
 					}
 				}
 				if (ogcType == 7) {
-					int count = wkbHelper.getInt(5);
+					int offset = 5; // skip byte order and type
+					int typeInt = wkbHelper.getInt(1);
+					boolean haveSrid = (typeInt & 0x20000000) != 0;
+					if (haveSrid){
+						offset += 4;
+					}
+					int count = wkbHelper.getInt(offset);
 					wkbHelper.adjustment += 9;
 
 					OGCStructure next = new OGCStructure();
@@ -200,6 +207,8 @@ class OperatorImportFromWkbLocal extends OperatorImportFromWkb {
 
 		// read type
 		int wkbType = wkbHelper.getInt(1);
+		wkbType =  (wkbType & 0xffff)%1000;
+
 
 		switch (wkbType) {
 		case WkbGeometryType.wkbPolygon:
@@ -371,10 +380,16 @@ class OperatorImportFromWkbLocal extends OperatorImportFromWkb {
 			int importFlags, boolean bZs, boolean bMs, WkbHelper wkbHelper) {
 		int offset;
 		int polygonCount;
+		int typeInt = wkbHelper.getInt(1);
+		boolean haveSrid = (typeInt & 0x20000000) != 0;
 
 		if (bMultiPolygon) {
-			polygonCount = wkbHelper.getInt(5);
-			offset = 9;
+			int headOffset = 5;
+			if (haveSrid){
+				headOffset += 4;
+			}
+			polygonCount = wkbHelper.getInt(headOffset);
+			offset = headOffset + 4;
 		} else {
 			polygonCount = 1;
 			offset = 0;
@@ -385,7 +400,12 @@ class OperatorImportFromWkbLocal extends OperatorImportFromWkb {
 		int partCount = 0;
 		int tempOffset = offset;
 		for (int ipolygon = 0; ipolygon < polygonCount; ipolygon++) {
+			typeInt = wkbHelper.getInt(offset + 1);
+			haveSrid = (typeInt & 0x20000000) != 0;
 			tempOffset += 5; // skip redundant byte order and type fields
+			if (haveSrid){
+				tempOffset += 4;
+			}
 			int ipartcount = wkbHelper.getInt(tempOffset);
 			tempOffset += 4;
 
@@ -520,7 +540,13 @@ class OperatorImportFromWkbLocal extends OperatorImportFromWkb {
 
 		// read Coordinates
 		for (int ipolygon = 0; ipolygon < polygonCount; ipolygon++) {
+			// skip redundant byte order and type fields
+			typeInt = wkbHelper.getInt(offset + 1);
+			haveSrid = (typeInt & 0x20000000) != 0;
 			offset += 5; // skip redundant byte order and type fields
+			if (haveSrid){
+				offset += 4;
+			}
 			int ipartcount = wkbHelper.getInt(offset);
 			offset += 4;
 			int ipolygonstart = ipolygonend;
@@ -725,9 +751,16 @@ class OperatorImportFromWkbLocal extends OperatorImportFromWkb {
 		int offset;
 		int originalPartCount;
 
+		int typeInt = wkbHelper.getInt(1);
+		boolean haveSrid = (typeInt & 0x20000000) != 0;
+
 		if (bMultiPolyline) {
-			originalPartCount = wkbHelper.getInt(5);
-			offset = 9;
+			int headOffset = 5;
+			if (haveSrid){
+				headOffset += 4;
+			}
+			originalPartCount = wkbHelper.getInt(headOffset);
+			offset = headOffset + 4;
 		} else {
 			originalPartCount = 1;
 			offset = 0;
@@ -738,7 +771,14 @@ class OperatorImportFromWkbLocal extends OperatorImportFromWkb {
 		int partCount = 0;
 		int tempOffset = offset;
 		for (int ipart = 0; ipart < originalPartCount; ipart++) {
+			// skip redundant byte order and type fields
+			typeInt = wkbHelper.getInt(offset + 1);
+			haveSrid = (typeInt & 0x20000000) != 0;
 			tempOffset += 5; // skip redundant byte order and type fields
+			if (haveSrid){
+				tempOffset += 4;
+			}
+
 			int ipointcount = wkbHelper.getInt(tempOffset);
 			tempOffset += 4;
 
@@ -805,7 +845,13 @@ class OperatorImportFromWkbLocal extends OperatorImportFromWkb {
 
 		// read Coordinates
 		for (int ipart = 0; ipart < originalPartCount; ipart++) {
+			// skip redundant byte order and type fields
+			typeInt = wkbHelper.getInt(offset + 1);
+			haveSrid = (typeInt & 0x20000000) != 0;
 			offset += 5; // skip redundant byte order and type fields
+			if (haveSrid){
+				offset += 4;
+			}
 
 			int ipointcount = wkbHelper.getInt(offset);
 			offset += 4;
@@ -906,6 +952,11 @@ class OperatorImportFromWkbLocal extends OperatorImportFromWkb {
 	private static Geometry importFromWkbMultiPoint(int importFlags,
 			boolean bZs, boolean bMs, WkbHelper wkbHelper) {
 		int offset = 5; // skip byte order and type
+		int typeInt = wkbHelper.getInt(1);
+		boolean haveSrid = (typeInt & 0x20000000) != 0;
+		if (haveSrid){
+			offset += 4;
+		}
 
 		// set point count
 		int point_count = wkbHelper.getInt(offset);
@@ -945,8 +996,13 @@ class OperatorImportFromWkbLocal extends OperatorImportFromWkb {
 
 		boolean bCreateMs = false, bCreateZs = false;
 		for (int i = 0; i < point_count; i++) {
-			offset += 5; // skip redundant byte order and type fields
-
+			// skip redundant byte order and type fields
+			typeInt = wkbHelper.getInt(offset + 1);
+			haveSrid = (typeInt & 0x20000000) != 0;
+			offset += 5;
+			if (haveSrid){
+				offset += 4;
+			}
 			// read xy coordinates
 			double x = wkbHelper.getDouble(offset);
 			offset += 8;
@@ -1011,7 +1067,11 @@ class OperatorImportFromWkbLocal extends OperatorImportFromWkb {
 	private static Geometry importFromWkbPoint(int importFlags, boolean bZs,
 			boolean bMs, WkbHelper wkbHelper) {
 		int offset = 5; // skip byte order and type
-
+		int typeInt = wkbHelper.getInt(1);
+		boolean haveSrid = (typeInt & 0x20000000) != 0;
+		if (haveSrid){
+			offset += 4;
+		}
 		// set xy coordinate
 		double x = wkbHelper.getDouble(offset);
 		offset += 8;
