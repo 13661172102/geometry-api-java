@@ -3,7 +3,7 @@ results/
 javadoc/
 depfiles/
 DepFiles/
-esri-geometry-api.jar
+geometry.jar
 .project
 .classpath
 description.jardesc
